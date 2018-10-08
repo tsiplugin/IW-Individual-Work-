@@ -16,7 +16,7 @@ S не выходит за границы size_t.
 */
 
 #include <stdio.h>
-//Множество всех возможных символов, которые могут быть в системе с основанием меньше или равным 36
+//Множество всех возможных символов в системе с основанием меньше или равным 36
 #define ALPHABET1 "0123456789abcdefghijklmnopqrstuvwxyz"
 #define ALPHABET2 "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ"
 //Максимальное основание системы счисления
@@ -24,82 +24,97 @@ S не выходит за границы size_t.
 //Минимальное основание системы счисления
 #define MIN 2
 
-void work(int base, size_t number)
+void work(int base_output, size_t number)
 {
-	int i=0; //счетчик
-	int result[8*sizeof(size_t)]; //результат в строковом формате. Размер - наибольший размера числа в двоичной записи
+	if(base_output<2)
+	{
+		printf("[error]");
+		return;
+	}
+	int i=0;
+	int result[8*sizeof(size_t)];
 	while(number!=0)
 	{
-		//base никогда не может принимать значение 0
-		result[i]=number%base;
-		number=number/base;
+		result[i]=number%base_output;
+		number=number/base_output;
 		i++;
 	}
 	while(i>0)
 			printf("%c", ALPHABET1[result[--i]]);
 }
 
-//Возвращает 0 при неучдачном считывании (основния систем не удовляетворяют условию, число имеет символы, которых в этой системе нет и т.д.) 
-// 1 - при удачном. Почему именно эти числа - станет понятно в функции main.
-int input(int *base2, size_t *number)
+int input_natural_in_interval(int *input, int min, int max)
 {
-	//base1 - основание системы вводимого числа
-	//base2 - основание системы в которую нужно перевести
-	//alpha - в ASCII имеется 128 символов, в зависимости от символа и начальной системы счисления ему приваивается число
-	int base1, i, alpha[128];
+	if(!scanf("%d", input))
+		return 0;
+	if(((*input)<min)||((*input)>max))
+		return 0;
+	return 1;
+}
 
-	//Те символы, которых нет в системе счисления получают обозначение -1. Остальные (числа и, возможно, буквы) получают номер
-	//Например, если система имеет основание 16, то символам 0-9a-f присвается значение от 0 до 15, символам A-F - значения от 10 до 15. Сделано для облегчения разбора
-	//Присваивание значений допустимым символам проводится чуть ниже
-	for(i=0; i<128; i++)
-		alpha[i]=-1;
-
-	//string_num - строка, которая хранит строковое предстваление вводимого числа. Зависит от размера size_t (максимум разрядов в двоичной системе) + '\0'
-	char string_num[8*sizeof(size_t)+1];
+int input_number_in_system(int base_input, size_t *number)
+{
+	int i;
+	char string_number[8*sizeof(size_t)+1];
 	
-	//Получаем значения оснований систем и проверяем их на соответсвие условию 2<=base2<base1<=36 т.е. 3<=base1<=36 и 2<=base2<=35
-	if(scanf("%d %d ", &base1, base2)<2)
-		return(0);
-	if((base1<=(*base2))||(base1>MAX)||(base1<(MIN+1))||((*base2)<MIN)||((*base2)>(MAX-1)))
-		return(0);
-	//Считываем сразу всю строку т.к. посимвольное считывание сильно замедлит выполнение программы
-	if(scanf("%s", string_num)==0)
-		return(0);
-
-	//Записываем допустимые символы и их значения.
-	for(i=0; i<base1; i++)
+	if(scanf("%s", string_number)==0)
+		return 0;
+	
+	int meaning_of_symbols[128];
+	for(i=0; i<128; i++)
+		meaning_of_symbols[i]=-1;
+	for(i=0; i<base_input; i++)
 	{
-		alpha[(int)(ALPHABET1[i])]=i;
-		alpha[(int)(ALPHABET2[i])]=i;
+		meaning_of_symbols[(int)(ALPHABET1[i])]=i;
+		meaning_of_symbols[(int)(ALPHABET2[i])]=i;
 	}
 
-	//Перевод строки в число. Обработка будет продолжаться, пока не получит '\0'
-	for(i=0; string_num[i]; i++)
+	for(i=0; string_number[i]; i++)
 	{
-		//Проверка допустим ли данный символ в системе с данным основанием.
-		if((alpha[(int)(string_num[i])])!=-1)
+		if((meaning_of_symbols[(int)(string_number[i])])!=-1)
 		{
-			(*number)*=base1;
-			(*number)+=alpha[(int)(string_num[i])];
+			(*number)*=base_input;
+			(*number)+=meaning_of_symbols[(int)(string_number[i])];
 		}
 		else
-			return(0);
+		{
+			i=0;
+			break;
+		}
 	}
-	return(1);
+	if(i==0)
+		return 0;
+	return 1;
 }
 
 int main(void)
 {
-	//base - основание системы счисления, в которую нужно перевести
-	int base=0;
-	//number - число, которое нужно перевести 
+	int base_input=0, base_output=0;
 	size_t number=0;
 
-	//При удачном считывании - переводим в нужную систему счислния
-	if(input(&base, &number))
-		work(base, number);
-	else //При неудачном - ошибка
+	if(!input_natural_in_interval(&base_input, MIN+1, MAX))
+	{
 		printf("[error]");
+		return 0;
+	}
+	
+	if(!input_natural_in_interval(&base_output, MIN, MAX-1))
+	{
+		printf("[error]");
+		return 0;
+	}
+	
+	if(base_output>=base_input)
+	{
+		printf("[error]");
+		return 0;
+	}
+	
+		
+	if(input_number_in_system(base_input, &number))
+		work(base_output, number);
+	else 
+			printf("[error]");
 
 	return(0);
 }
