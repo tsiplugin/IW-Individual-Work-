@@ -24,12 +24,12 @@ S не выходит за границы size_t.
 //Минимальное основание системы счисления
 #define MIN 2
 
-void work(int base_output, size_t number)
+int work(int base_output, size_t number)
 {
 	if(base_output<2)
 	{
 		printf("[error]");
-		return;
+		return 0;
 	}
 	int i=0;
 	int result[8*sizeof(size_t)];
@@ -40,7 +40,8 @@ void work(int base_output, size_t number)
 		i++;
 	}
 	while(i>0)
-			printf("%c", ALPHABET1[result[--i]]);
+		printf("%c", ALPHABET1[result[--i]]);
+	return 1;
 }
 
 int input_natural_in_interval(int *input, int min, int max)
@@ -51,11 +52,14 @@ int input_natural_in_interval(int *input, int min, int max)
 		return 0;
 	return 1;
 }
-
+//Аналог функции atoi для произвольной системы счисления (в данном случае от 3 до 36 (см. MIX и MIN)) 
 int input_number_in_system(int base_input, size_t *number)
 {
 	int i;
 	char string_number[8*sizeof(size_t)+1];
+	
+	if((base_input<MIN+1)||(base_input>MAX))
+		return 0;
 	
 	if(scanf("%s", string_number)==0)
 		return 0;
@@ -112,9 +116,14 @@ int main(void)
 	
 		
 	if(input_number_in_system(base_input, &number))
-		work(base_output, number);
+	{
+		if(!work(base_output, number))
+		{
+			printf("[error]");
+		}
+	}
 	else 
 			printf("[error]");
 
-	return(0);
+	return 0;
 }
